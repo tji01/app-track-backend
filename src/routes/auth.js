@@ -16,9 +16,9 @@ router.post('/signup', async (req, res) => {
 	const {email, pass, name} = req.body;
 
 	//check for email and password
-	if(!email || !pass) 
+	if(!email || !pass || !name) 
 	{
-		return res.status(400).json({error: "Email and Password are Required"});
+		return res.status(400).json({error: "Email, Username and Password are Required"});
 	}
 	
 	//check to see if email is in use

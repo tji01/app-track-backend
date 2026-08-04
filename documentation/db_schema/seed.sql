@@ -2,7 +2,7 @@
 -- USERS
 -- ============================================
 INSERT INTO users (id, email, password_hash, name) VALUES
-(1, 'alex@example.com', '$2b$10$examplehashvalue1234567890abcdefghijk', 'Alex Rivera');
+(1, 'tyler@example.com', '$2b$10$5rZ0BhIDQXy6nCZZJxCeWehey6yswnXRWk00X9bwKa.14HA8..3V2', 'tji01');
 
 -- Reset the sequence so future inserts don't collide with hardcoded IDs
 SELECT setval('users_id_seq', (SELECT MAX(id) FROM users));
