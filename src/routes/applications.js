@@ -9,7 +9,7 @@
     timestamp with timezone updated_at
 */
 import express from 'express';
-import { pool } from '../db.js';
+import { pool } from '../db.js'; 
 import jwt from 'jsonwebtoken';
 import { requireAuth } from '../middleware/auth.js';
 
@@ -17,10 +17,10 @@ const router = express.Router();
 
 //create
 router.post('/', requireAuth, async (req, res) => {
-  const { companyId, roleTitle, jobPostUrl, source, salaryRange, appliedDate } = req.body;
+  const { userId, companyId, roleTitle, jobPostUrl, source, salaryRange, appliedDate } = req.body;
 
   // 1. Validate required fields up front
-  if (!companyId || !roleTitle || !appliedDate) {
+  if (!companyId || !roleTitle || !appliedDate || !userId) {
     return res.status(400).json({
       error: 'companyId, roleTitle, and appliedDate are required'
     });
@@ -76,7 +76,7 @@ router.post('/', requireAuth, async (req, res) => {
 /*
     retrieve all applications associated with user id, along with associated stage events and notes
 */
-router.get('/read-app', requireAuth, (req, res) => {
+router.get('/read-app', requireAuth, async (req, res) => {
     const {id, uid} = req.body;
 
     if(!id || !uid)
@@ -179,3 +179,5 @@ router.delete('/:id', requireAuth, async (req, res) => {
 
   res.status(204).send();
 });
+
+export default router;

@@ -14,7 +14,7 @@ export function requireAuth(req, res, next)
 
 	if(!authHeader || !authHeader.startsWith('Bearer '))
 	{
-		return res.status(401).json({error: 'No token provided'});
+		return res.status(401).json({error: 'Authentication failed.'});
 	}
 
 	const token = authHeader.split(' ')[1];
