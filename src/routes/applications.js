@@ -76,7 +76,7 @@ router.post('/', requireAuth, async (req, res) => {
 /*
     retrieve all applications associated with user id, along with associated stage events and notes
 */
-router.get('/read-app', requireAuth, async (req, res) => {
+router.get('/', requireAuth, async (req, res) => {
     const {id, uid} = req.body;
 
     if(!id || !uid)

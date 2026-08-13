@@ -2,7 +2,7 @@ import express from 'express';
 import cors from 'cors';
 
 import authRoutes from './routes/auth.js';
-//import companyRoutes from './routes/companies.js';
+import companyRoutes from './routes/companies.js';
 import applicationRoutes from './routes/applications.js';
 //import stageEventRoutes from './routes/stageEvents.js';
 //import contactRoutes from './routes/contacts.js';
@@ -16,7 +16,7 @@ app.use(express.json());      // parses JSON request bodies into req.body
 
 // --- routes ---
 app.use('/api/auth', authRoutes);
-//app.use('/api/companies', companyRoutes);
+app.use('/api/companies', companyRoutes);
 app.use('/api/applications', applicationRoutes);
 //app.use('/api/stage-events', stageEventRoutes);
 //app.use('/api/contacts', contactRoutes);
