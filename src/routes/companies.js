@@ -7,7 +7,7 @@
 
     company DB table columns:
 
-    int id | int user_id | varchar name | varchar website | notes txt | timestamp with time zone created_at
+    int id | int user_id | varchar name | varchar website | txt notes | timestamp with time zone created_at
 */
 import express from 'express';
 import { pool } from '../db.js';
@@ -18,23 +18,24 @@ const router = express.Router();
 //create
 //required DB columns: id, uid, name
 router.post('/', requireAuth, async (req, res) => {
-    const {id, userId, name, website, txt} = req.body;
+    const {userId, name, website, notes} = req.body;
+    var result;
 
-    if(!id || !userId || !name)
+    if(!userId || !name)
     {
-        return res.status(400).json({error: "Company ID, User ID and Company Name are reqired."});
+        return res.status(400).json({error: "User ID and Company Name are reqired."});
     }
 
     try{
-        const result = await pool.query(`INSERT INTO companies 
-                                        (id, user_id, name, website, txt, created_at)
+        result = await pool.query(`INSERT INTO companies 
+                                        (user_id, name, website, notes, created_at)
                                         VALUES
-                                        ($1, $2, $3, $4, $5, $6)`,
-                                         [id, userId, name, website, txt]);
+                                        ($1, $2, $3, $4, NOW())`,
+                                         [userId, name, website, notes]);
         
     }
     catch (err) {
-        console.err(err);
+        console.error(err);
         return res.status(500).json({error: "Failed to create company entry."});
     }
     res.status(201).json(result.rows[0]);
@@ -45,20 +46,20 @@ router.get('/:uid/:id', requireAuth, async (req, res) => {
     //retrieve individual company entry
     //need user id, company id
     const {uid, id} = req.params;
-
+    var result;
     if(!uid || !id)
     {
         return res.status(400).json({error: "User and Company ID are required."});
     }
 
     try{
-        const result = await pool.query(`SELECT * FROM companies WHERE user_id = $1 AND id = $2`, 
+        result = await pool.query(`SELECT * FROM companies WHERE user_id = $1 AND id = $2`, 
             [uid, id]
         );
         
     }
     catch (err) {
-        console.err(err);
+        console.error(err);
         return res.status(500).json({error: "Failed to retrieve company entry."});
     }
     res.status(201).json(result.rows[0]);
@@ -69,7 +70,7 @@ router.get('/:uid', requireAuth, async (req, res) => {
     //retrieve individual company entry
     //need user id
     const {uid} = req.params;
-
+    var result;
     if(!uid)
     {
         return res.status(400).json({error: "User ID is required."});
@@ -77,13 +78,13 @@ router.get('/:uid', requireAuth, async (req, res) => {
 
     try{
 
-        const result = await pool.query(`SELECT id, name, notes FROM companies WHERE user_id = $1`, 
+        result = await pool.query(`SELECT id, name, notes FROM companies WHERE user_id = $1`, 
             [uid]
         );
         
     }
     catch (err) {
-        console.err(err);
+        console.error(err);
         return res.status(500).json({error: "Failed to retrieve company entries."});
     }
     res.status(201).json(result.rows);
@@ -92,7 +93,7 @@ router.get('/:uid', requireAuth, async (req, res) => {
 //update
 router.patch('/', requireAuth, async (req, res) => {
     const {id, uid, name, website, notes} = req.body;
-
+    var result;
     if(!id || !uid)
     {
         return res.status(400).json({error: "User and Company ID are required."});
@@ -100,7 +101,7 @@ router.patch('/', requireAuth, async (req, res) => {
 
     try {
 
-        const result = await pool.query(
+        result = await pool.query(
             `UPDATE companies
             SET name = COALESCE($1, name), 
                 website = COALESCE($2, website),
@@ -120,7 +121,7 @@ router.patch('/', requireAuth, async (req, res) => {
 //delete
 router.delete('/:id/:uid', requireAuth, async (req, res) => {
     const {id, uid} = req.params;
-
+    var result;
     if(!id || !uid)
     {
         return res.status(400).json({error: "User and Company ID are required."});   
@@ -128,14 +129,16 @@ router.delete('/:id/:uid', requireAuth, async (req, res) => {
 
     try {
 
-        const result = await pool.query(`DELETE FROM companies WHERE id = $1 AND user_id = $2`,
+        result = await pool.query(`DELETE FROM companies WHERE id = $1 AND user_id = $2 RETURNING *`,
             [id, uid]
         );
 
     } catch (err) {
-
+        console.error(err);
         return res.status(500).json({error: "Failed to delete company entry."});
     }
+    
+    res.status(200).json({deleted: `${result.rows.length}`});
 });
 
 export default router;

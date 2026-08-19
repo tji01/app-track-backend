@@ -11,7 +11,8 @@
 import express from 'express';
 import { pool } from '../db.js'; 
 import jwt from 'jsonwebtoken';
-import { requireAuth } from '../middleware/auth.js';
+import {requireAuth, verifyCredentials} from '../middleware/auth.js';
+
 
 const router = express.Router();
 
@@ -74,14 +75,20 @@ router.post('/', requireAuth, async (req, res) => {
 
 //read
 /*
-    retrieve all applications associated with user id, along with associated stage events and notes
+    read individual applications associated with user id, along with associated stage events and notes
 */
-router.get('/', requireAuth, async (req, res) => {
-    const {id, uid} = req.body;
+router.get('/:id/:uid', requireAuth, async (req, res) => {
+    const {id, uid} = req.params;
 
     if(!id || !uid)
     {
         return res.status(400).json({error: "Application ID and User ID are required"});
+    }
+
+    //verify the claimed uid owns the token
+    if(!verifyCredentials(uid, req))
+    {
+      return res.status(401).json({error: "Authentication Error"});
     }
 
     const applications = await pool.query("SELECT * FROM applications WHERE id = $1 AND user_id = $2", [id, uid]);
@@ -93,13 +100,41 @@ router.get('/', requireAuth, async (req, res) => {
 
     const stage = await pool.query("SELECT * FROM stage_events WHERE application_id = $1 ORDER BY occurred_at ASC",
         [id]
-    )
+    );
+
     const notes = await pool.query("SELECT * FROM notes WHERE application_id = $1 ORDER BY created_at DESC",
         [id]
-    )
-    res.status(201).json({applications: applications.rows, stage: stage.rows, notes: notes.rows});
+    );
+
+    res.status(200).json({applications: applications.rows, stage: stage.rows, notes: notes.rows});
 });
 
+//read all
+router.get('/:uid', requireAuth, async (req, res) => {
+    const {uid} = req.params;
+
+    if(!uid)
+    {
+        return res.status(400).json({error: "User ID is required"});
+    }
+
+    if(!verifyCredentials(uid, req))
+    {
+      console.log(`claimed: ${uid}, token-decrypted: ${req.userId}`);
+      return res.status(401).json({error: "Authentication Error"});
+
+    }
+
+    const applications = await pool.query("SELECT * FROM applications WHERE user_id = $1", [uid]);
+
+    if(applications.rows.length == 0)
+    {
+        return res.status(404).json({error: "Application not found"});
+    }
+
+    
+    res.status(200).json({applications: applications.rows});
+});
 
 
 //update
@@ -149,7 +184,8 @@ router.patch('/:id', requireAuth, async (req, res) => {
     }
 
     await client.query('COMMIT');
-    res.json(updated.rows[0]);
+    res.status(200).json(updated.rows[0]);
+
 
   } catch (err) {
     await client.query('ROLLBACK');
@@ -177,7 +213,7 @@ router.delete('/:id', requireAuth, async (req, res) => {
     return res.status(404).json({ error: 'Application not found' });
   }
 
-  res.status(204).send();
+  res.status(204).json(result.rows[0]);
 });
 
 export default router;

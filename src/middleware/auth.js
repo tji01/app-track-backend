@@ -8,6 +8,10 @@
 
 import jwt from 'jsonwebtoken';
 
+
+/*
+	Used to validate a given token belongs to a valid user
+*/
 export function requireAuth(req, res, next)
 {
 	const authHeader = req.headers.authorization;
@@ -32,4 +36,21 @@ export function requireAuth(req, res, next)
 	}
 
 
+}
+
+/*
+	Verify that a token belongs to the user ID a request claims to be coming from.
+*/
+export function verifyCredentials(claim, req)
+{
+	const authHeader = req.headers.authorization;
+
+	const token = authHeader.split(' ')[1];
+
+	const decoded = jwt.verify(token, process.env.JWT_SECRET);
+	var realID = decoded.userId;
+
+	if(realID == claim) return true;
+
+	return false;
 }
